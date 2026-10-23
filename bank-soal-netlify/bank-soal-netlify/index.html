@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dashboard Pencarian Soal & Jawaban Instan</title>
+<style>
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --card-border: #334155;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-hover: #0284c7;
+  --green-bg: #14532d;
+  --green-border: #22c55e;
+  --green-text: #4ade80;
+  --red-bg: #7f1d1d;
+  --red-border: #ef4444;
+  --red-text: #fca5a5;
+  --highlight: #854d0e;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px 14px 100px;
+}
+
+/* Header UI */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--card-border);
+}
+.header h1 {
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Setting Server Bar */
+.server-bar {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+.server-bar input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-main);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+/* Pop-up Toast System */
+#popup {
+  position: fixed;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-align: center;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+  z-index: 9999;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#popup.show { top: 20px; }
+#popup.green {
+  background: var(--green-bg);
+  border: 2px solid var(--green-border);
+  color: var(--green-text);
+}
+#popup.red {
+  background: var(--red-bg);
+  border: 2px solid var(--red-border);
+  color: var(--red-text);
+}
+
+/* Input Area */
+textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 14px;
+  border: 2px solid var(--card-border);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--text-main);
+  font-size: 1rem;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.action-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0 20px;
+}
+button {
+  background: var(--accent);
+  color: #0f172a;
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button:hover { background: var(--accent-hover); }
+button.ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--card-border);
+}
+#st { font-size: 0.85rem; color: var(--text-muted); margin-left: auto; }
+
+/* Result Cards */
+.best-card {
+  background: var(--card);
+  border: 2px solid var(--green-border);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+}
+.best-card .badge {
+  display: inline-block;
+  background: var(--green-bg);
+  color: var(--green-text);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  border: 1px solid var(--green-border);
+}
+.best-card .ans {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 8px 0;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.best-card .meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.item-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.item-card .q { font-size: 0.95rem; color: var(--text-muted); margin: 0 0 8px; }
+.item-card .a { font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin: 0; border-left: 3px solid var(--accent); padding-left: 10px; }
+.item-card .info { font-size: 0.75rem; color: var(--text-muted); margin-top: 8px; }
+
+mark { background: var(--highlight); color: #fff; padding: 0 2px; border-radius: 3px; }
+
+button:disabled { opacity: .6; cursor: wait; }
+@media (max-width: 600px) { .server-bar { flex-wrap: wrap; } .server-bar input { min-width: 100%; order: 3; } .action-bar { flex-wrap: wrap; } #st { width: 100%; margin-left: 0; } .header h1 { font-size: 1.1rem; } }
+#gate { display: block; margin-bottom: 16px; padding: 12px; border: 1px solid var(--card-border); border-radius: 10px; background: var(--card); }
+</style>
+</head>
+<body>
+
+<div id="popup"></div>
+
+<main>
+  <div class="header">
+    <h1>⚡ Bank Soal Auto-Search</h1>
+  </div>
+
+  <div class="server-bar">
+    <span>URL Server:</span>
+    <input id="serverUrl" type="url" placeholder="https://api-domain-anda.com" aria-label="URL API backend">
+    <button id="simpanServer" style="padding: 6px 12px; font-size: 0.8rem;">Simpan</button>
+  </div>
+
+  <div id="gate">
+    <label>Kode akses: <input id="kode" type="password" autocomplete="off"></label>
+    <button id="simpanKode" type="button">Masuk</button>
+  </div>
+
+  <textarea id="teks" placeholder="Tempel soal di sini (Ctrl+V)..." autofocus></textarea>
+  
+  <div class="action-bar">
+    <button id="cari" type="button">Cari Soal</button>
+    <button id="hapus" class="ghost" type="button">Bersihkan</button>
+    <span id="st"></span>
+  </div>
+
+  <p style="font-size:.8rem;color:var(--text-muted);line-height:1.5">Catatan: aplikasi ini memerlukan backend API yang menyediakan <code>POST /api/cari</code>. URL API harus dapat diakses publik melalui HTTPS dan mengizinkan CORS dari domain Netlify Anda.</p>
+  <div id="hasil" aria-live="polite"></div>
+</main>
+
+<script>
+(function(){
+  var $ = function(id) { return document.getElementById(id); };
+  var KEY_KODE = 'kode-akses', KEY_SERVER = 'server-url';
+  var DEFAULT_API = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || '';
+  var REQUEST_TIMEOUT_MS = 15000;
+  
+  function getApiBase() {
+    return (localStorage.getItem(KEY_SERVER) || DEFAULT_API).trim().replace(/\/+$/, '');
+  }
+  
+  $('serverUrl').value = getApiBase();
+  if (!getApiBase()) { $('st').textContent = 'Masukkan URL API online untuk mulai mencari.'; }
+  $('simpanServer').onclick = function() {
+    var val = $('serverUrl').value.trim().replace(/\/+$/, "");
+    if(val) {
+      try { new URL(val); } catch(e) { showPopup('red', 'URL tidak valid. Gunakan alamat lengkap, misalnya https://api-domain-anda.com'); return; }
+      localStorage.setItem(KEY_SERVER, val);
+      $('serverUrl').value = val;
+      showPopup('green', 'URL API disimpan di browser ini.');
+      $('st').textContent = 'URL API tersimpan';
+    } else { showPopup('red', 'Masukkan URL API online terlebih dahulu.'); }
+  };
+
+  function kode() { try { return sessionStorage.getItem(KEY_KODE) || ''; } catch(e) { return ''; } }
+  function simpanKode(v) { try { sessionStorage.setItem(KEY_KODE, v); } catch(e) {} }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function tokens(s) { return (s.toLowerCase().match(/[a-z0-9]{2,}/g) || []).filter(function(v,i,a){ return a.indexOf(v)===i; }); }
+  
+  function hl(text, qs) {
+    var h = esc(text);
+    qs.slice().sort(function(a,b){ return b.length - a.length; }).slice(0, 12).forEach(function(t){
+      h = h.replace(new RegExp('(^|[^a-z0-9&;])('+t+')(?![a-z0-9])','gi'), '$1<mark>$2</mark>');
+    });
+    return h;
+  }
+
+  function showPopup(type, text) {
+    var p = $('popup');
+    p.className = 'show ' + type;
+    p.innerText = text;
+    setTimeout(function() { p.className = p.className.replace('show', '').trim(); }, 4000);
+  }
+
+  function api(path, opt) {
+    opt = opt || {};
+    var base = getApiBase();
+    if (!base) return Promise.reject(new Error('URL API belum diatur. Masukkan alamat backend online pada kolom URL Server.'));
+    var headers = Object.assign({'X-Kode': kode()}, opt.headers || {});
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    if (controller) opt.signal = controller.signal;
+    var timeout = controller ? setTimeout(function(){ controller.abort(); }, REQUEST_TIMEOUT_MS) : null;
+    opt.headers = headers;
+    return fetch(base + path, opt).then(function(r){
+      return r.text().then(function(raw){
+        var j;
+        try { j = raw ? JSON.parse(raw) : {}; } catch(e) { throw new Error('Server mengirim respons yang bukan JSON (HTTP ' + r.status + ').'); }
+        if (!r.ok) throw new Error(j.error || j.message || ('Permintaan gagal (HTTP ' + r.status + ').'));
+        return {s:r.status, j:j};
+      });
+    }).finally(function(){ if (timeout) clearTimeout(timeout); });
+  }
+
+  function tampilkanHasil(data, t) {
+    var qs = tokens(t), html = '';
+    var topMatch = data[0];
+    var pct = Math.round(topMatch.sim * 100);
+
+    // 100% MATCH: Langsung ikat jawaban, jangan tampilkan yang lain
+    if (pct >= 100) {
+      showPopup('green', 'ONOK IKI JAWABANE DI WOCO SEK YA WEDI SALAH');
+      html += '<div class="best-card">' +
+                '<span class="badge">100% PASTI AKURAT (DIIKAT)</span>' +
+                '<div class="ans">' + esc(topMatch.a) + '</div>' +
+                '<div class="meta">Sumber File: ' + esc(topMatch.sh ? topMatch.sh.join(' / ') : '-') + '</div>' +
+              '</div>';
+      $('hasil').innerHTML = html;
+      return;
+    }
+
+    // < 100% Tapi Ditemukan (>0%)
+    showPopup('green', 'ONOK IKI JAWABANE DI WOCO SEK YA WEDI SALAH');
+
+    // Tampilkan Jawaban Terbaik di Atas
+    html += '<div class="best-card">' +
+              '<span class="badge">JAWABAN PALING MENDEKATI (' + pct + '% MIRIP)</span>' +
+              '<div class="ans">' + esc(topMatch.a) + '</div>' +
+              '<div class="meta">Mirip Soal: ' + hl(topMatch.q, qs) + '</div>' +
+            '</div>';
+
+    // Tampilkan List Kemiripan Lain Per Kotak
+    html += '<h3 style="font-size: 0.95rem; color: var(--text-muted); margin: 16px 0 10px;">Daftar Kemiripan Lainnya:</h3>';
+    
+    data.forEach(function(x, idx) {
+      var itemPct = Math.round(x.sim * 100);
+      html += '<div class="item-card">' +
+                '<div class="q">' + hl(x.q, qs) + '</div>' +
+                '<div class="a">' + esc(x.a) + '</div>' +
+                '<div class="info">' + itemPct + '% mirip · ' + esc(x.sh ? x.sh.join(' / ') : '') + '</div>' +
+              '</div>';
+    });
+
+    $('hasil').innerHTML = html;
+  }
+
+  function cari() {
+    var t = $('teks').value.trim();
+    if (!t) { showPopup('red', 'Tempel atau ketik soal terlebih dahulu.'); $('teks').focus(); return; }
+    if (!getApiBase()) { showPopup('red', 'URL API belum diatur. Deploy backend terlebih dahulu, lalu masukkan URL-nya.'); $('st').textContent = 'API belum diatur'; return; }
+    $('cari').disabled = true;
+    $('st').textContent = 'Mencari...';
+    
+    api('/api/cari', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text: t})
+    })
+    .then(function(res) {
+      $('cari').disabled = false;
+      $('st').textContent = '';
+      if (res.s === 200 && Array.isArray(res.j.c) && res.j.c.length > 0) {
+        tampilkanHasil(res.j.c, t);
+      } else {
+        // TIDAK DITEMUKAN: POPUP MERAH
+        $('hasil').innerHTML = '';
+        showPopup('red', 'Soal belum ditemukan. Coba gunakan kata kunci yang lebih lengkap.');
+      }
+    })
+    .catch(function(err) {
+      $('cari').disabled = false;
+      $('st').textContent = 'Pencarian gagal';
+      var msg = err && err.name === 'AbortError' ? 'Server terlalu lama merespons. Coba lagi.' : (err && err.message ? err.message : 'Tidak dapat terhubung ke API.');
+      if (/Failed to fetch|NetworkError|fetch/i.test(msg)) msg = 'Koneksi API gagal. Periksa URL backend, status server, HTTPS, dan pengaturan CORS.';
+      showPopup('red', msg);
+    });
+  }
+
+  $('simpanKode').onclick = function() {
+    simpanKode($('kode').value.trim());
+    showPopup('green', 'Kode akses disimpan untuk sesi browser ini.');
+  };
+  $('kode').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); $('simpanKode').click(); } });
+  $('cari').onclick = cari;
+  $('hapus').onclick = function() {
+    $('teks').value = '';
+    $('hasil').innerHTML = '';
+    $('st').textContent = '';
+    $('teks').focus();
+  };
+
+  $('teks').addEventListener('paste', function() { setTimeout(cari, 50); });
+  $('teks').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      cari();
+    }
+  });
+})();
+</script>
+</body>
+</html>
